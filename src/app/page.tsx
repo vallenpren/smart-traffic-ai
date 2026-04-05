@@ -126,24 +126,33 @@ export default function Home() {
         <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <header className="sticky top-0 z-50 p-6 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/50">
+      <header className="sticky top-0 z-50 p-4 sm:p-6 backdrop-blur-2xl bg-slate-950/70 border-b border-slate-800/60 shadow-2xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/30">
-              <Activity className="w-6 h-6 text-white" />
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4"
+          >
+            <div className="relative p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-500/40 border border-blue-400/30">
+              <div className="absolute inset-0 bg-white/20 rounded-2xl animate-pulse"></div>
+              <Activity className="w-6 h-6 text-white relative z-10" />
             </div>
             <div>
-              <h1 className="text-xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">SMARTRAFFIC AI</h1>
-              <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Autonomous Monitoring System</p>
+              <h1 className="text-2xl font-black bg-gradient-to-r from-white via-blue-100 to-slate-400 bg-clip-text text-transparent">SMARTRAFFIC</h1>
+              <p className="text-[10px] text-blue-400 font-bold tracking-[0.2em] uppercase">AI Vision Engine</p>
             </div>
-          </div>
+          </motion.div>
           
-          <button 
+          <motion.button 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowSettings(!showSettings)}
-            className="p-3 bg-slate-800/50 hover:bg-slate-800 rounded-2xl transition-all border border-slate-700/50"
+            className="p-3 bg-slate-800/80 hover:bg-slate-700/80 rounded-2xl transition-all border border-slate-700 shadow-xl"
           >
-            <Settings2 className="w-5 h-5 text-slate-400" />
-          </button>
+            <Settings2 className="w-5 h-5 text-slate-300" />
+          </motion.button>
         </div>
       </header>
 
@@ -185,71 +194,97 @@ export default function Home() {
           <div className="space-y-6">
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-6 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-800/50 shadow-xl overflow-hidden relative group">
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <LayoutDashboard className="w-16 h-16" />
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="p-6 bg-gradient-to-br from-slate-900/80 to-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl relative group overflow-hidden"
+              >
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+                <div className="absolute top-4 right-4 p-3 bg-blue-500/10 rounded-2xl text-blue-400">
+                  <LayoutDashboard className="w-6 h-6" />
                 </div>
-                <p className="text-slate-400 text-sm font-semibold mb-1">Total Kendaraan</p>
-                <h2 className="text-4xl font-black text-white">{stats.total}</h2>
-                <div className="mt-4 flex gap-2">
-                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-bold rounded-lg border border-blue-500/20">REAL-TIME</span>
+                <p className="text-slate-400 text-sm font-bold mb-2">Total Terdeteksi</p>
+                <h2 className="text-5xl font-black text-white tracking-tighter">{stats.total}</h2>
+                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-black rounded-lg border border-emerald-500/20">
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></div>
+                  LIVE SYNC
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="p-6 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-800/50 shadow-xl overflow-hidden relative group">
-                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Trophy className="w-16 h-16" />
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="p-6 bg-gradient-to-br from-slate-900/80 to-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl relative group overflow-hidden"
+              >
+                 <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-all"></div>
+                 <div className="absolute top-4 right-4 p-3 bg-indigo-500/10 rounded-2xl text-indigo-400">
+                  <Trophy className="w-6 h-6" />
                 </div>
-                <p className="text-slate-400 text-sm font-semibold mb-1">Terbanyak</p>
-                <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
-                  {Object.entries(stats.counts).sort((a,b) => b[1] - a[1])[0][0]}
+                <p className="text-slate-400 text-sm font-bold mb-2">Dominasi Arus</p>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tight mt-2">
+                  {stats.total > 0 ? Object.entries(stats.counts).sort((a,b) => b[1] - a[1])[0][0] : '-'}
                 </h2>
-                <p className="mt-4 text-[10px] text-slate-500 font-bold">DOMINASI ARUS</p>
-              </div>
+                <div className="mt-4 flex">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">KENDARAAN TERBANYAK</span>
+                </div>
+              </motion.div>
             </div>
 
             {/* Chart Card */}
-            <div className="p-6 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-slate-800/50 shadow-xl">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="p-6 bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl"
+            >
               <div className="flex items-center justify-between mb-8">
-                <h3 className="font-black text-lg tracking-tight flex items-center gap-2">
-                  <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
-                  Visualisasi Data
+                <h3 className="font-black text-lg tracking-tight flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                    <Activity className="w-4 h-4 text-blue-400" />
+                  </div>
+                  Statistik Volume
                 </h3>
               </div>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                  <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" opacity={0.5} />
                     <XAxis 
                       dataKey="name" 
-                      stroke="#475569" 
-                      fontSize={12} 
+                      stroke="#64748b" 
+                      fontSize={11} 
                       fontWeight="bold"
                       axisLine={false}
                       tickLine={false}
+                      dy={10}
                     />
                     <YAxis 
-                      stroke="#475569" 
-                      fontSize={12} 
+                      stroke="#64748b" 
+                      fontSize={11} 
                       fontWeight="bold"
                       axisLine={false}
                       tickLine={false}
+                      dx={-10}
                     />
                     <Tooltip 
-                      cursor={{ fill: '#1e293b', radius: 12 }}
+                      cursor={{ fill: '#1e293b', opacity: 0.4 }}
                       contentStyle={{ 
-                        backgroundColor: '#0f172a', 
-                        border: '1px solid #1e293b', 
-                        borderRadius: '20px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid #334155', 
+                        borderRadius: '16px',
                         padding: '12px 16px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-                        fontSize: '12px',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+                        color: 'white',
                         fontWeight: 'bold'
                       }}
                     />
                     <Bar 
                       dataKey="count" 
-                      radius={[12, 12, 4, 4]}
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={40}
                     >
                       {stats.chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -258,7 +293,7 @@ export default function Home() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
 

@@ -138,13 +138,21 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
           prevDetectionsRef.current = currentDetections;
         }
       }
-      animationId = requestAnimationFrame(processFrame);
+      
+      // Throttle to roughly 15 FPS for stability on mobile devices
+      setTimeout(() => {
+        if (isCameraActive) {
+          animationId = requestAnimationFrame(processFrame);
+        }
+      }, 1000 / 15);
     };
 
     if (isCameraActive && !isLoading) {
       processFrame();
     }
-    return () => cancelAnimationFrame(animationId);
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
   }, [model, isCameraActive, isLoading, activeCategories, onVehicleDetected]);
 
   return (
