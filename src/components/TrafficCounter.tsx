@@ -60,6 +60,8 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
     }
   };
 
+  const prevDetectionsRef = useRef<any[]>([]);
+
   // Processing loop
   useEffect(() => {
     let animationId: number;
@@ -70,9 +72,33 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
           
+          // Draw Counting Line (Middle)
+          const lineY = canvasRef.current.height / 2;
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(0, lineY);
+          ctx.lineTo(canvasRef.current.width, lineY);
+          ctx.stroke();
+          
+          ctx.fillStyle = '#ef4444';
+          ctx.font = 'bold 12px Inter';
+          ctx.fillText('GARIS PENGHITUNG (COUNT LINE)', 10, lineY - 10);
+
+          const currentDetections: any[] = [];
+
           predictions.forEach(prediction => {
-            if (activeCategories.includes(prediction.class)) {
+            if (activeCategories.includes(prediction.class) && prediction.score > 0.5) {
               const [x, y, width, height] = prediction.bbox;
+              const centerX = x + width / 2;
+              const centerY = y + height / 2;
+
+              currentDetections.push({
+                class: prediction.class,
+                bbox: prediction.bbox,
+                center: [centerX, centerY],
+                score: prediction.score
+              });
               
               // Draw bounding box
               ctx.strokeStyle = '#3b82f6';
@@ -84,21 +110,32 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
               ctx.fillRect(x, y - 25, width, 25);
               ctx.fillStyle = 'white';
               ctx.font = 'bold 16px Inter';
-              ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x + 5, y - 7);
+              ctx.fillText(`${prediction.class}`, x + 5, y - 7);
 
-              // Simple line-crossing logic could go here
-              // For now, emit detection (with basic stabilization)
-              if (prediction.score > 0.6) {
-                // Throttle detection via state or outside
-                onVehicleDetected({
-                  id: Math.random().toString(36).substr(2, 9),
-                  type: prediction.class,
-                  timestamp: Date.now(),
-                  confidence: prediction.score
-                });
-              }
+              // Tracking & Counting Logic (Line Crossing)
+              // We compare current detection center with previous frame centers
+              prevDetectionsRef.current.forEach(prev => {
+                if (prev.class === prediction.class) {
+                  const [prevX, prevY] = prev.center;
+                  
+                  // If it crossed the line from top to bottom or bottom to top
+                  const crossed = (prevY < lineY && centerY >= lineY) || (prevY > lineY && centerY <= lineY);
+                  
+                  if (crossed) {
+                    onVehicleDetected({
+                      id: Math.random().toString(36).substr(2, 9),
+                      type: prediction.class,
+                      timestamp: Date.now(),
+                      confidence: prediction.score
+                    });
+                  }
+                }
+              });
             }
           });
+
+          // Update refs for next frame
+          prevDetectionsRef.current = currentDetections;
         }
       }
       animationId = requestAnimationFrame(processFrame);
