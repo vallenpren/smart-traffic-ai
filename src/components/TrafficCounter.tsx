@@ -65,30 +65,49 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
   // Processing loop
   useEffect(() => {
     let animationId: number;
-    const processFrame = async () => {
+    let lastTime = 0;
+    
+    const processFrame = async (time: number) => {
+      // Throttle to roughly 15 FPS
+      if (time - lastTime < 1000 / 15) {
+         animationId = requestAnimationFrame(processFrame);
+         return;
+      }
+      lastTime = time;
+
       if (model && videoRef.current && videoRef.current.readyState === 4 && canvasRef.current) {
+        // Sync canvas size with video actual size to ensure accurate drawing
+        if (canvasRef.current.width !== videoRef.current.videoWidth) {
+          canvasRef.current.width = videoRef.current.videoWidth;
+          canvasRef.current.height = videoRef.current.videoHeight;
+        }
+
         const predictions = await model.detect(videoRef.current);
         const ctx = canvasRef.current.getContext('2d');
+        
         if (ctx) {
           ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
           
           // Draw Counting Line (Middle)
           const lineY = canvasRef.current.height / 2;
-          ctx.strokeStyle = '#ef4444';
+          ctx.setLineDash([10, 10]);
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)'; // Red, slightly transparent
           ctx.lineWidth = 4;
           ctx.beginPath();
           ctx.moveTo(0, lineY);
           ctx.lineTo(canvasRef.current.width, lineY);
           ctx.stroke();
+          ctx.setLineDash([]);
           
           ctx.fillStyle = '#ef4444';
-          ctx.font = 'bold 12px Inter';
-          ctx.fillText('GARIS PENGHITUNG (COUNT LINE)', 10, lineY - 10);
+          ctx.font = 'bold 16px Inter';
+          ctx.fillText('GARIS RADAR (TARGET LINE)', 10, lineY - 10);
 
           const currentDetections: any[] = [];
 
           predictions.forEach(prediction => {
-            if (activeCategories.includes(prediction.class) && prediction.score > 0.5) {
+            // Lowered confidence threshold for testing to ensure it catches something
+            if (activeCategories.includes(prediction.class) && prediction.score > 0.4) {
               const [x, y, width, height] = prediction.bbox;
               const centerX = x + width / 2;
               const centerY = y + height / 2;
@@ -105,29 +124,47 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
               ctx.lineWidth = 3;
               ctx.strokeRect(x, y, width, height);
               
+              // Draw center dot
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+              ctx.fill();
+
               // Draw label
               ctx.fillStyle = '#3b82f6';
               ctx.fillRect(x, y - 25, width, 25);
               ctx.fillStyle = 'white';
               ctx.font = 'bold 16px Inter';
-              ctx.fillText(`${prediction.class}`, x + 5, y - 7);
+              ctx.fillText(`${prediction.class} (${Math.round(prediction.score * 100)}%)`, x + 5, y - 7);
 
               // Tracking & Counting Logic (Line Crossing)
-              // We compare current detection center with previous frame centers
+              let hasCrossed = false;
+              
               prevDetectionsRef.current.forEach(prev => {
                 if (prev.class === prediction.class) {
                   const [prevX, prevY] = prev.center;
+                  // Check if it's the exact same vehicle object using Euclidean distance (max 150px movement between frames)
+                  const distance = Math.hypot(prevX - centerX, prevY - centerY);
                   
-                  // If it crossed the line from top to bottom or bottom to top
-                  const crossed = (prevY < lineY && centerY >= lineY) || (prevY > lineY && centerY <= lineY);
-                  
-                  if (crossed) {
-                    onVehicleDetected({
-                      id: Math.random().toString(36).substr(2, 9),
-                      type: prediction.class,
-                      timestamp: Date.now(),
-                      confidence: prediction.score
-                    });
+                  if (distance < 150) {
+                    // Check if previous center was on one side and current is on the other side
+                    const crossedDown = prevY <= lineY && centerY > lineY;
+                    const crossedUp = prevY >= lineY && centerY < lineY;
+                    
+                    if (crossedDown || crossedUp) {
+                      hasCrossed = true;
+                      
+                      // Visual flash on line cross
+                      ctx.fillStyle = 'rgba(16, 185, 129, 0.4)';
+                      ctx.fillRect(x, y, width, height);
+                      
+                      onVehicleDetected({
+                        id: Math.random().toString(36).substr(2, 9),
+                        type: prediction.class,
+                        timestamp: Date.now(),
+                        confidence: prediction.score
+                      });
+                    }
                   }
                 }
               });
@@ -139,19 +176,19 @@ const TrafficCounter: React.FC<TrafficCounterProps> = ({ onVehicleDetected, acti
         }
       }
       
-      // Throttle to roughly 15 FPS for stability on mobile devices
-      setTimeout(() => {
-        if (isCameraActive) {
-          animationId = requestAnimationFrame(processFrame);
-        }
-      }, 1000 / 15);
+      if (isCameraActive) {
+        animationId = requestAnimationFrame(processFrame);
+      }
     };
 
     if (isCameraActive && !isLoading) {
-      processFrame();
+      animationId = requestAnimationFrame(processFrame);
     }
+    
     return () => {
-      cancelAnimationFrame(animationId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
   }, [model, isCameraActive, isLoading, activeCategories, onVehicleDetected]);
 
